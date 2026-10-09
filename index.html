@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>كويز العملي — الجهاز الهيكلي</title>
+<style>
+:root{--bg:#f1f5ef;--paper:#fffef9;--ink:#183b34;--green:#137b68;--line:#d8e3da;--muted:#687b70;--red:#a5453c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.8 Tahoma,Arial,sans-serif}
+main{max-width:880px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:24px}
+h1{font-size:27px;margin:0}h2{font-size:23px}
+small,.muted{color:var(--muted)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:24px;margin:16px 0}
+button,select,input{font:inherit}
+button{cursor:pointer;min-height:44px;padding:10px 16px;border:1px solid var(--line);border-radius:11px;background:var(--paper);color:var(--ink)}
+button.main{background:var(--green);color:white;border-color:var(--green)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #e6b55c;outline-offset:3px}
+[hidden]{display:none!important}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+label{display:block;font-size:13px}
+select,input[type=text]{width:100%;padding:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px}
+input[type=file]{width:100%;font-size:13px}
+.prompt{direction:ltr;text-align:left;font-family:Arial,sans-serif;font-size:24px;line-height:1.5}
+.option{display:block;width:100%;margin:9px 0;text-align:left;direction:ltr;line-height:1.5}
+.option.selected{border-color:var(--green);background:#e4f3e8}
+.option.correct{border-color:var(--green)}
+.option.wrong{border-color:var(--red);background:#fff0ec}
+.photos{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+.photo{background:white;padding:6px;border:1px solid var(--line);border-radius:12px;max-width:100%;flex:1;min-width:130px}
+.photo img{display:block;width:100%;height:260px;object-fit:contain}
+.photo.wide img{height:155px;object-fit:cover}
+.feedback{padding:18px;border-radius:12px;background:#e7f2e8;margin:18px 0}
+.feedback.bad{background:#fff0ec}
+.answer{direction:ltr;text-align:left;font-family:Arial,sans-serif;font-size:19px;font-weight:bold;color:var(--green)}
+.feedback p{margin:8px 0}
+.nav{justify-content:center;margin:17px 0}
+.nav button{min-height:33px;padding:3px 10px;font-size:12px}
+.nav button.current{border-color:var(--green);background:#e4f3e8}
+.score{font:bold 55px Arial,sans-serif;color:var(--green);direction:ltr}
+.review{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
+.review summary{cursor:pointer;direction:ltr;text-align:left;font-family:Arial,sans-serif}
+.status{font-size:12px;color:var(--muted);min-height:24px}
+audio{display:block;width:100%;margin:12px auto;max-width:380px}
+footer{font-size:12px;color:var(--muted);text-align:center;margin:25px}
+footer a{color:var(--green);text-decoration:none}
+progress{width:100%;height:8px;accent-color:var(--green)}
+dialog{max-width:95vw;max-height:95vh;border:0;border-radius:14px;padding:15px;background:var(--paper)}
+dialog::backdrop{background:#123b34bc}
+#zoom-image{display:block;max-width:86vw;max-height:75vh;object-fit:contain;margin:12px auto}
+body.dark{--bg:#10231f;--paper:#1a342c;--ink:#eef5ec;--line:#335247;--muted:#b0c6b7;--green:#277e64}
+body.dark .feedback,body.dark .option.selected,body.dark .nav button.current{background:#244f3c}
+body.dark .feedback.bad,body.dark .option.wrong{background:#512f2d}
+body.dark .answer{color:#9bd2b3}
+@media(max-width:580px){
+main{padding:15px}.card{padding:18px}.grid{grid-template-columns:1fr}
+.prompt{font-size:21px}h1{font-size:22px}.photo img{height:220px}
+.row button{flex:1}.nav button{flex:0}header{gap:10px}
+}
+</style>
+</head>
+
+<body>
+<main>
+<header>
+  <div>
+    <h1>كويز العملي</h1>
+    <small dir="ltr">HSF · Skeletal System</small>
+  </div>
+  <button onclick="document.body.classList.toggle('dark')" aria-label="تبديل المظهر">◐</button>
+</header>
+
+<noscript>فعّل JavaScript لتشغيل الكويز.</noscript>
+
+<section id="home">
+  <div class="card">
+    <h2>١٢ سؤالًا من رزمة أنكي</h2>
+    <p>الأسئلة بالإنجليزية، والشرح بالعربية. حمّل رزمة <b dir="ltr">forgpt.apkg</b> لإظهار صورها وتسجيلاتها.</p>
+    <input type="file" accept=".apkg" onchange="loadDeck(this.files[0])" aria-label="اختيار رزمة أنكي">
+    <p class="status" id="asset-status" role="status">اختر الرزمة، ثم ابدأ.</p>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <label>طريقة الحل
+        <select id="mode">
+          <option value="practice">تدريب — تصحيح فوري</option>
+          <option value="exam">اختبار — التصحيح في النهاية</option>
+        </select>
+      </label>
+
+      <label>نوع الإجابة
+        <select id="format">
+          <option value="choice">اختيار متعدد وصح أو خطأ</option>
+          <option value="recall">استدعاء كتابي</option>
+        </select>
+      </label>
+
+      <label>الموضوع
+        <select id="topic">
+          <option value="all">كل الموضوعات</option>
+          <option value="thorax">القص والصدر</option>
+          <option value="pelvis">الحزام الحوضي والطرف السفلي</option>
+          <option value="foot">عظام القدم</option>
+          <option value="images">التعرّف على العظام</option>
+        </select>
+      </label>
+
+      <label>الأسئلة
+        <select id="pool">
+          <option value="all">كل الأسئلة</option>
+          <option value="errors">أخطائي السابقة</option>
+        </select>
+      </label>
+    </div>
+
+    <p id="history" class="muted"></p>
+
+    <div class="row">
+      <button class="main" id="start" onclick="beginQuiz()" disabled>ابدأ الكويز</button>
+      <button id="resume" onclick="resumeQuiz()" hidden>متابعة الجلسة</button>
+    </div>
+
+    <p id="save-status" class="status">يُحفظ التقدم على هذا الجهاز فقط.</p>
+  </div>
+</section>
+
+<section id="quiz" hidden>
+  <div class="row">
+    <button onclick="showHome()">حفظ وخروج</button>
+    <b id="position"></b>
+  </div>
+
+  <progress id="progress" value="0" max="12"></progress>
+
+  <div class="card">
+    <h2 id="prompt" class="prompt" tabindex="-1"></h2>
+    <div id="question-images" class="photos"></div>
+    <div id="answers"></div>
+    <div id="feedback" class="feedback" hidden></div>
+
+    <div class="row">
+      <button id="previous" onclick="moveTo(S.index-1)">السابق</button>
+      <button id="skip" onclick="skipQuestion()">تخطي</button>
+      <button id="next" class="main" onclick="nextQuestion()">تحقق</button>
+    </div>
+  </div>
+
+  <nav id="navigation" class="row nav" aria-label="التنقل بين الأسئلة"></nav>
+</section>
+
+<section id="results" hidden>
+  <div class="card">
+    <div class="score" id="score"></div>
+    <p id="result-text"></p>
+
+    <div class="row">
+      <button id="retry" class="main" onclick="retryErrors()">إعادة الأخطاء</button>
+      <button onclick="beginQuiz(S.order)">إعادة الجلسة</button>
+      <button onclick="showHome()">الرئيسية</button>
+    </div>
+
+    <div id="review"></div>
+  </div>
+</section>
+
+<footer>
+  <a href="https://t.me/saudkxz" target="_blank" rel="noopener noreferrer">By Saudkxz</a>
+</footer>
+</main>
+
+<dialog id="zoom">
+  <button onclick="document.getElementById('zoom').close()">إغلاق</button>
+  <img id="zoom-image" alt="الصورة الأصلية">
+</dialog>
+
+<script>
+'use strict';
+
+const Q=[
+{
+  id:"sternum_type",g:"thorax",t:"mcq",
+  p:"How is the sternum classified by its shape?",
+  o:["Flat bone","Long bone","Short bone","Irregular bone"],
+  a:"Flat bone",
+  r:["flat bone","flat bones","flat","عظم مسطح","عظم مسطّح","مسطح","عظام مسطحة"],
+  e:"عظم القص (Sternum) من العظام المسطحة (Flat bones).",
+  f:[],b:["sternum_animation"],s:""
+},
+{
+  id:"sternum_location",g:"thorax",t:"mcq",
+  p:"Where is the sternum located?",
+  o:["In the midline of the anterior thorax","In the midline of the posterior thorax","On the lateral side of the thorax","In the midline of the upper abdomen"],
+  a:"In the midline of the anterior thorax",
+  r:["in the midline of the anterior thorax","midline of the anterior thorax","anterior midline of the thorax","anterior midline of the chest","middle of the front of the thorax","in the middle of the front of the thorax","middle of the front of the chest","in the middle of the front of the chest","midline anterior thorax","منتصف الجزء الأمامي من الصدر","في منتصف الجزء الأمامي من الصدر","منتصف مقدمة الصدر","في منتصف مقدمة الصدر","في الخط الناصف أمام الصدر","منتصف الجدار الأمامي للصدر"],
+  e:"يقع عظم القص في منتصف الجزء الأمامي من الصدر، أي في الخط الناصف للجدار الأمامي للقفص الصدري.",
+  f:[],b:["sternum_animation"],s:""
+},
+{
+  id:"sternum_wall",g:"thorax",t:"tf",
+  p:"The sternum contributes to the posterior wall of the thoracic cage.",
+  o:["True","False"],a:"False",r:["false","خطأ","غلط"],
+  e:"العبارة خاطئة: عظم القص يساهم في تكوين الجدار الأمامي للقفص الصدري، وليس الجدار الخلفي.",
+  f:[],b:["sternum_animation"],s:""
+},
+{
+  id:"bone_image_1",g:"images",t:"mcq",
+  p:"Identify the bone shown in these images.",
+  o:["Humerus","Femur","Tibia","Radius"],a:"Humerus",
+  r:["humerus","عظم العضد","العضد","عضد"],
+  e:"العظم هو عظم العضد (Humerus). صُحّح الاسم المكتوب في الرزمة من Humeru إلى Humerus. صورة المقارنة الأصلية أدناه تُظهر الفرق بينه وبين عظم الفخذ.",
+  f:["humerus_photo","humerus_single"],
+  b:["humerus_comparison"],s:"humerus_audio"
+},
+{
+  id:"lower_limb_skeleton",g:"pelvis",t:"tf",
+  p:"The lower limb is part of the appendicular skeleton.",
+  o:["True","False"],a:"True",r:["true","صح","صحيح"],
+  e:"العبارة صحيحة: الطرف السفلي جزء من الهيكل العظمي الطرفي (Appendicular skeleton).",
+  f:[],b:[],s:""
+},
+{
+  id:"pelvic_bones",g:"pelvis",t:"mcq",
+  p:"Which bones form the pelvic girdle?",
+  o:["Right and left hip bones","Right and left femora","Right and left scapulae","Right and left clavicles"],
+  a:"Right and left hip bones",
+  r:["right and left hip bones","hip bones","hip bone","coxal bones","coxal bone","two hip bones","two coxal bones","عظام الورك","عظمتا الورك","عظمتي الورك","عظمتَي الورك","عظم الورك الأيمن والأيسر","عظمتا الورك اليمنى واليسرى"],
+  e:"يتكوّن الحزام الحوضي من عظمتَي الورك: واحدة يمنى وأخرى يسرى. أما الحوض العظمي الكامل فيشمل أيضًا العجز والعصعص؛ وهما ليسا الإجابة المقصودة هنا.",
+  f:[],b:[],s:""
+},
+{
+  id:"pelvic_count",g:"pelvis",t:"mcq",
+  p:"How many hip bones form the pelvic girdle in total?",
+  o:["2","1","3","4"],a:"2",
+  r:["2","two","two hip bones","two bones","اثنان","اثنين","عظمتان","عظمتين","عظمتا الورك"],
+  e:"الحزام الحوضي يتكوّن من عظمتَي ورك في المجموع: عظمة في الجانب الأيمن وعظمة في الجانب الأيسر.",
+  f:[],b:[],s:""
+},
+{
+  id:"pelvic_link",g:"pelvis",t:"tf",
+  p:"The pelvic girdle helps connect the lower limbs to the axial skeleton.",
+  o:["True","False"],a:"True",r:["true","صح","صحيح"],
+  e:"العبارة صحيحة: الحزام الحوضي يربط الطرفين السفليين بالهيكل العظمي المحوري، من خلال اتصال عظمتَي الورك بالعجز.",
+  f:[],b:[],s:""
+},
+{
+  id:"tarsal_count",g:"foot",t:"mcq",
+  p:"How many tarsal bones are present in one foot?",
+  o:["7","5","8","14"],a:"7",
+  r:["7","seven","seven bones","7 bones","7 tarsal bones","سبعة","سبع","سبعة عظام","سبع عظام","٧ عظام"],
+  e:"يوجد ٧ عظام رُصغ في كل قدم. السؤال عن قدم واحدة.",
+  f:[],b:["tarsal_animation"],s:""
+},
+{
+  id:"tarsal_type",g:"foot",t:"mcq",
+  p:"How are the tarsal bones classified by shape?",
+  o:["Short bones","Long bones","Flat bones","Sesamoid bones"],
+  a:"Short bones",
+  r:["short bones","short bone","short","عظام قصيرة","عظم قصير","قصيرة","قصير"],
+  e:"تُصنَّف عظام رُصغ القدم (Tarsal bones) ضمن العظام القصيرة (Short bones)، كما ورد في الرزمة.",
+  f:[],b:["tarsal_animation"],s:""
+},
+{
+  id:"tarsal_location",g:"foot",t:"mcq",
+  p:"Which description best matches the location of the tarsal bones?",
+  o:["Hindfoot and midfoot, behind the metatarsals","Forefoot and toes, in front of the metatarsals","Midfoot and forefoot, within the metatarsals","Hindfoot and toes, on both sides of the metatarsals"],
+  a:"Hindfoot and midfoot, behind the metatarsals",
+  r:["hindfoot and midfoot behind the metatarsals","hindfoot and midfoot","midfoot and hindfoot","hind foot and mid foot","مؤخرة القدم ووسطها خلف عظام مشط القدم","مؤخرة القدم ووسطها","مؤخرة ووسط القدم","وسط ومؤخرة القدم","مؤخرة القدم ووسط القدم"],
+  e:"تمتد عظام الرصغ عبر مؤخرة القدم ووسطها، خلف عظام مشط القدم. أُخذت هذه الصياغة الأدق من شرح ظهر البطاقة؛ فالاقتصار على العقب والكاحل لا يصف جميع عظام الرصغ.",
+  f:[],b:["tarsal_animation"],s:""
+},
+{
+  id:"bone_image_2",g:"images",t:"mcq",
+  p:"Identify the bone shown in this image.",
+  o:["Fibula","Tibia","Ulna","Radius"],a:"Fibula",
+  r:["fibula","عظم الشظية","الشظية","شظية"],
+  e:"العظم الظاهر في الصورة هو الشظية (Fibula).",
+  f:["fibula_photo"],b:[],s:"fibula_audio"
+}
+];
+
+const FILES={
+  sternum_animation:'17909566976006579239196014044079.gif',
+  humerus_photo:'Screenshot_20261002-1921348200664137111080616.png',
+  humerus_single:'Screenshot_20261002-192116.png',
+  humerus_comparison:'Screenshot_20261002-192026.png',
+  tarsal_animation:'Tarsal_bones_-_animation01.gif',
+  fibula_photo:'Fibula_SHN-03.jpg',
+  humerus_audio:'ankidroid_audiorec246844973777745517.3gp',
+  fibula_audio:'ankidroid_audiorec8716656258804535521.3gp'
+};
+
+const KEY='SaudSkeletalQuizCopy1';
+const el=id=>document.getElementById(id);
+
+let cacheState={stats:{},session:null};
+let S=null;
+let assetURLs={};
+let assetReady=false;
+
+try{
+  const old=JSON.parse(localStorage.getItem(KEY)||'null');
+  if(old&&old.stats&&typeof old.stats==='object')cacheState=old;
+}catch(_){}
+
+if(
+  cacheState.session&&
+  Array.isArray(cacheState.session.order)&&
+  cacheState.session.order.every(i=>Number.isInteger(i)&&Q[i])&&
+  cacheState.session.order.length&&
+  Number.isInteger(cacheState.session.index)&&
+  cacheState.session.index>=0&&
+  cacheState.session.index<cacheState.session.order.length&&
+  cacheState.session.options&&
+  cacheState.session.answers
+)S=cacheState.session;
+
+function esc(s){
+  return String(s??'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function norm(s){
+  return String(s??'')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c))
+    .replace(/[۰-۹]/g,c=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(c))
+    .replace(/[\u064b-\u065f\u0670\u0640]/g,'')
+    .replace(/[أإآٱ]/g,'ا')
+    .replace(/ى/g,'ي')
+    .replace(/ة/g,'ه')
+    .replace(/[^\p{L}\p{N}\s]/gu,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function grade(q,v){
+  return !!norm(v)&&[q.a,...q.r].some(x=>norm(x)===norm(v));
+}
+
+function shuffle(a){
+  a=[...a];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function save(){
+  cacheState.session=S&&!S.finished?S:null;
+  try{
+    localStorage.setItem(KEY,JSON.stringify(cacheState));
+  }catch(_){
+    el('save-status').textContent=
+      'التقدم متاح لهذه الجلسة فقط؛ تعذّر حفظه على الجهاز.';
+  }
+}
+
+function stopAudio(){
+  document.querySelectorAll('audio').forEach(a=>a.pause());
+}
+
+function show(name){
+  stopAudio();
+  ['home','quiz','results'].forEach(id=>el(id).hidden=id!==name);
+  window.scrollTo({top:0,behavior:'auto'});
+}
+
+function showHome(){
+  save();
+  show('home');
+  el('resume').hidden=!S||S.finished;
+  el('resume').disabled=!assetReady;
+  const errors=Object.values(cacheState.stats).filter(v=>!v).length;
+  el('history').textContent='أسئلة تحتاج مراجعة: '+errors+' من '+Q.length;
+}
+
+function beginQuiz(ids){
+  if(!assetReady)return;
+
+  if(!ids){
+    ids=Q.map((_,i)=>i).filter(i=>
+      (el('topic').value==='all'||Q[i].g===el('topic').value)&&
+      (el('pool').value==='all'||cacheState.stats[Q[i].id]===false)
+    );
+
+    if(
+      S&&!S.finished&&
+      !confirm('بدء جلسة جديدة بدل الجلسة غير المكتملة؟')
+    )return;
+  }
+
+  if(!ids.length){
+    alert('لا توجد أسئلة لهذا الاختيار.');
+    return;
+  }
+
+  const mode=ids===S?.order?S.mode:el('mode').value;
+  const format=ids===S?.order?S.format:el('format').value;
+
+  S={
+    order:shuffle(ids),
+    index:0,
+    mode,
+    format,
+    answers:{},
+    options:Object.fromEntries(ids.map(i=>[
+      i,Q[i].t==='tf'?[...Q[i].o]:shuffle(Q[i].o)
+    ])),
+    finished:false
+  };
+
+  save();
+  show('quiz');
+  renderQuestion();
+}
+
+function resumeQuiz(){
+  if(!S||!assetReady)return;
+  show('quiz');
+  renderQuestion();
+}
+
+function current(){
+  return Q[S.order[S.index]];
+}
+
+function photo(key){
+  if(!assetURLs[key])return '';
+
+  return '<button class="photo '+
+    (key==='fibula_photo'?'wide':'')+
+    '" onclick="zoomImage(\''+key+
+    '\')" aria-label="تكبير الصورة">'+
+    '<img src="'+assetURLs[key]+'" alt="صورة السؤال"></button>';
+}
+
+function zoomImage(key){
+  el('zoom-image').src=assetURLs[key];
+  el('zoom').showModal();
+}
+
+function media(q){
+  let html=q.b.map(photo).join('');
+
+  if(q.s&&assetURLs[q.s]){
+    html+='<audio controls preload="none" src="'+assetURLs[q.s]+
+      '" onerror="this.nextElementSibling.hidden=false"></audio>'+
+      '<small hidden>تعذّر تشغيل التسجيل على هذا المتصفح.</small>';
+  }
+
+  return html;
+}
+
+function creditButton(q,a){
+  return S.format==='recall'&&q.t!=='tf'&&
+    !a.correct&&!a.skip&&a.value.trim()?
+
+    '<p><small>لم تطابق الإجابة الصيغ المسجلة. '+
+    'إذا حملت المعنى نفسه يمكنك اعتمادها بتقييم ذاتي.</small></p>'+
+    '<button onclick="selfCredit(\''+q.id+
+    '\')">إجابتي تحمل المعنى نفسه</button>':'';
+}
+
+function renderQuestion(){
+  stopAudio();
+
+  const q=current();
+  const a=S.answers[q.id];
+  const locked=S.mode==='practice'&&a?.done;
+  const typed=S.format==='recall'&&q.t!=='tf';
+
+  el('prompt').textContent=q.p;
+  el('position').textContent=(S.index+1)+' / '+S.order.length;
+  el('question-images').innerHTML=q.f.map(photo).join('');
+
+  el('answers').innerHTML=typed?
+
+    '<label>اكتب إجابتك'+
+    '<input id="typed" type="text" dir="auto" maxlength="400" '+
+    'autocomplete="off" spellcheck="false" value="'+esc(a?.value||'')+
+    '" '+(locked?'disabled':'')+
+    ' oninput="writeAnswer(this.value)"></label>':
+
+    S.options[S.order[S.index]].map((v,i)=>
+      '<button class="option '+
+      (a?.value===v?'selected ':'')+
+      (locked&&v===q.a?'correct ':'')+
+      (locked&&a?.value===v&&!a.correct?'wrong':'')+
+      '" '+(locked?'disabled':'')+
+      ' onclick="choose('+i+')">'+esc(v)+'</button>'
+    ).join('');
+
+  el('feedback').hidden=!locked;
+  el('feedback').className='feedback '+(locked&&!a.correct?'bad':'');
+
+  el('feedback').innerHTML=locked?
+    '<b>'+(a.skip?'لم تُجب':
+      a.correct?'إجابة صحيحة'+(a.manual?' · تقييم ذاتي':''):
+      'تحتاج مراجعة')+
+    '</b><div class="answer">'+esc(q.a)+
+    '</div><p>'+esc(q.e)+'</p>'+
+    creditButton(q,a)+
+    '<div class="photos">'+media(q)+'</div>':'';
+
+  el('previous').disabled=S.index===0;
+  el('skip').hidden=locked;
+
+  el('next').disabled=
+    S.mode==='practice'&&!locked&&!a?.value?.trim();
+
+  el('next').textContent=locked||S.mode==='exam'?
+    (S.index===S.order.length-1?'عرض النتيجة':'التالي'):
+    'تحقق من الإجابة';
+
+  el('progress').max=S.order.length;
+  el('progress').value=S.order.filter(i=>
+    S.answers[Q[i].id]?.done||S.answers[Q[i].id]?.value
+  ).length;
+
+  el('navigation').innerHTML=S.order.map((_,i)=>
+    '<button class="'+(i===S.index?'current':'')+
+    '" onclick="moveTo('+i+')" aria-label="السؤال '+(i+1)+
+    '">'+(i+1)+'</button>'
+  ).join('');
+
+  el('prompt').focus({preventScroll:true});
+}
+
+function writeAnswer(value){
+  const q=current();
+
+  if(S.mode==='practice'&&S.answers[q.id]?.done)return;
+
+  S.answers[q.id]={
+    value,done:false,correct:false,skip:false
+  };
+
+  save();
+  el('next').disabled=S.mode==='practice'&&!value.trim();
+}
+
+function choose(i){
+  writeAnswer(S.options[S.order[S.index]][i]);
+  renderQuestion();
+}
+
+function moveTo(i){
+  if(i<0||i>=S.order.length)return;
+  S.index=i;
+  save();
+  renderQuestion();
+}
+
+function nextQuestion(){
+  const q=current();
+  const a=S.answers[q.id];
+
+  if(S.mode==='practice'&&!a?.done){
+    if(!a?.value.trim())return;
+    a.correct=grade(q,a.value);
+    a.done=true;
+    save();
+    renderQuestion();
+    return;
+  }
+
+  if(S.index<S.order.length-1)moveTo(S.index+1);
+  else finishQuiz();
+}
+
+function skipQuestion(){
+  const q=current();
+
+  S.answers[q.id]={
+    value:'',
+    done:S.mode==='practice',
+    correct:false,
+    skip:true
+  };
+
+  save();
+
+  if(S.index<S.order.length-1)moveTo(S.index+1);
+  else finishQuiz();
+}
+
+function finishQuiz(){
+  const missing=S.order.filter(i=>
+    !S.answers[Q[i].id]?.value?.trim()
+  ).length;
+
+  if(
+    missing&&
+    !confirm('تسليم الجلسة مع '+missing+' أسئلة دون إجابة؟')
+  )return;
+
+  for(const i of S.order){
+    const q=Q[i];
+    let a=S.answers[q.id]||{value:'',skip:true};
+
+    if(!a.value.trim())a.skip=true;
+
+    if(!a.done||S.mode==='exam'){
+      a.correct=!a.skip&&grade(q,a.value);
+      a.manual=false;
+    }
+
+    a.done=true;
+    S.answers[q.id]=a;
+    cacheState.stats[q.id]=!!a.correct;
+  }
+
+  S.finished=true;
+  save();
+  show('results');
+  renderResults();
+}
+
+function renderResults(){
+  const correct=S.order.filter(i=>
+    S.answers[Q[i].id].correct
+  ).length;
+
+  el('score').textContent=
+    Math.round(correct/S.order.length*100)+'%';
+
+  el('result-text').textContent=
+    correct+' إجابات صحيحة من '+S.order.length;
+
+  el('retry').disabled=correct===S.order.length;
+
+  el('review').innerHTML=S.order.map(i=>{
+    const q=Q[i];
+    const a=S.answers[q.id];
+
+    return '<details class="review"><summary>'+
+      (a.correct?'✓ ':'✗ ')+esc(q.p)+
+      '</summary><p>إجابتك: <b dir="auto">'+
+      esc(a.value||'لم تجب')+'</b>'+
+      (a.manual?' (تقييم ذاتي)':'')+
+      '</p><div class="answer">'+esc(q.a)+
+      '</div><p>'+esc(q.e)+'</p>'+
+      creditButton(q,a)+
+      '<div class="photos">'+
+      q.f.map(photo).join('')+
+      media(q)+'</div></details>';
+  }).join('');
+}
+
+function selfCredit(id){
+  const a=S.answers[id];
+
+  if(!a||a.correct||a.skip||!a.value.trim())return;
+
+  a.correct=true;
+  a.done=true;
+  a.manual=true;
+
+  if(S.finished){
+    cacheState.stats[id]=true;
+    save();
+    renderResults();
+  }else{
+    save();
+    renderQuestion();
+  }
+}
+
+function retryErrors(){
+  const ids=S.order.filter(i=>!S.answers[Q[i].id].correct);
+  el('mode').value=S.mode;
+  el('format').value=S.format;
+  beginQuiz(ids);
+}
+
+/* قراءة ملفات ZIP داخل رزمة APKG، دون مكتبات خارجية. */
+function readZip(bytes){
+  const v=new DataView(
+    bytes.buffer,bytes.byteOffset,bytes.byteLength
+  );
+
+  const n=bytes.length;
+  const decoder=new TextDecoder();
+  const entries=new Map();
+  let end=-1;
+
+  for(let p=n-22;p>=Math.max(0,n-65557);p--){
+    if(
+      v.getUint32(p,true)===0x06054b50&&
+      p+22+v.getUint16(p+20,true)===n
+    ){
+      end=p;
+      break;
+    }
+  }
+
+  if(end<0)throw Error('تعذّر قراءة الرزمة.');
+
+  let p=v.getUint32(end+16,true);
+  const count=v.getUint16(end+10,true);
+
+  for(let i=0;i<count;i++){
+    if(
+      p+46>n||
+      v.getUint32(p,true)!==0x02014b50
+    )throw Error('رزمة غير سليمة.');
+
+    const flags=v.getUint16(p+8,true);
+    const method=v.getUint16(p+10,true);
+    const size=v.getUint32(p+20,true);
+    const nameLength=v.getUint16(p+28,true);
+    const extra=v.getUint16(p+30,true);
+    const comment=v.getUint16(p+32,true);
+    const offset=v.getUint32(p+42,true);
+
+    const name=decoder.decode(
+      bytes.slice(p+46,p+46+nameLength)
+    );
+
+    entries.set(name,{flags,method,size,offset});
+    p+=46+nameLength+extra+comment;
+  }
+
+  return async name=>{
+    const e=entries.get(name);
+
+    if(!e||(e.flags&1)){
+      throw Error('الرزمة لا تتضمن الوسائط المطلوبة.');
+    }
+
+    const p=e.offset;
+
+    if(
+      p+30>n||
+      v.getUint32(p,true)!==0x04034b50
+    )throw Error('ملف غير سليم.');
+
+    const start=
+      p+30+v.getUint16(p+26,true)+v.getUint16(p+28,true);
+
+    if(start+e.size>n)throw Error('ملف غير مكتمل.');
+
+    const raw=bytes.slice(start,start+e.size);
+
+    if(e.method===0)return raw;
+
+    if(e.method===8){
+      try{
+        const stream=new Blob([raw]).stream()
+          .pipeThrough(new DecompressionStream('deflate-raw'));
+
+        return new Uint8Array(
+          await new Response(stream).arrayBuffer()
+        );
+      }catch(_){
+        throw Error(
+          'جرّب فتح الصفحة بمتصفح محدّث لقراءة هذه الرزمة.'
+        );
+      }
+    }
+
+    throw Error('صيغة الضغط غير مدعومة.');
+  };
+}
+
+async function loadDeck(file){
+  if(!file)return;
+
+  el('asset-status').textContent='جارٍ قراءة الصور والصوت…';
+
+  try{
+    const read=readZip(
+      new Uint8Array(await file.arrayBuffer())
+    );
+
+    const mapping=JSON.parse(
+      new TextDecoder().decode(await read('media'))
+    );
+
+    const blobs={};
+
+    for(const [key,name]of Object.entries(FILES)){
+      const entry=Object.keys(mapping)
+        .find(k=>mapping[k]===name);
+
+      if(entry===undefined){
+        throw Error(
+          'اختر رزمة forgpt.apkg الأصلية لهذا الكويز.'
+        );
+      }
+
+      const type=
+        name.endsWith('.gif')?'image/gif':
+        name.endsWith('.png')?'image/png':
+        name.endsWith('.jpg')?'image/jpeg':
+        'audio/mp4';
+
+      blobs[key]=new Blob(
+        [await read(entry)],{type}
+      );
+    }
+
+    installAssets(blobs);
+
+    const kept=await assetDB('write',blobs);
+
+    el('asset-status').textContent=
+      'تم تحميل الصور والصوت'+
+      (kept?' وحفظهما على هذا الجهاز.':' لهذه الجلسة.');
+  }catch(e){
+    el('asset-status').textContent=e.message;
+  }
+}
+
+function installAssets(blobs){
+  if(
+    !Object.keys(FILES).every(k=>blobs[k] instanceof Blob)
+  )return false;
+
+  stopAudio();
+
+  Object.values(assetURLs)
+    .forEach(u=>URL.revokeObjectURL(u));
+
+  assetURLs=Object.fromEntries(
+    Object.entries(blobs).map(([k,b])=>[
+      k,URL.createObjectURL(b)
+    ])
+  );
+
+  assetReady=true;
+  el('start').disabled=false;
+  el('resume').disabled=false;
+
+  if(!el('quiz').hidden)renderQuestion();
+
+  return true;
+}
+
+function assetDB(mode,blobs){
+  return new Promise(resolve=>{
+    try{
+      const r=indexedDB.open('SaudSkeletalAssets1',1);
+
+      r.onerror=()=>resolve(null);
+      r.onblocked=()=>resolve(null);
+
+      r.onupgradeneeded=()=>{
+        r.result.createObjectStore('assets');
+      };
+
+      r.onsuccess=()=>{
+        const db=r.result;
+
+        const tx=db.transaction(
+          'assets',
+          mode==='write'?'readwrite':'readonly'
+        );
+
+        const store=tx.objectStore('assets');
+        const result={};
+
+        if(mode==='write'){
+          for(const [k,b]of Object.entries(blobs)){
+            store.put(b,k);
+          }
+        }else{
+          for(const key of Object.keys(FILES)){
+            const get=store.get(key);
+            get.onsuccess=()=>{
+              result[key]=get.result;
+            };
+          }
+        }
+
+        tx.oncomplete=()=>{
+          db.close();
+          resolve(mode==='write'?true:result);
+        };
+
+        tx.onerror=tx.onabort=()=>{
+          db.close();
+          resolve(null);
+        };
+      };
+    }catch(_){
+      resolve(null);
+    }
+  });
+}
+
+showHome();
+
+assetDB('read').then(blobs=>{
+  if(blobs&&installAssets(blobs)){
+    el('asset-status').textContent=
+      'الصور والصوت جاهزان من الرزمة التي حمّلتها سابقًا.';
+  }
+});
+</script>
+</body>
+</html>
